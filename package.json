@@ -1,0 +1,23 @@
+{
+  "name": "mongodb-product-catalogue",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MongoDB product catalogue API and database examples",
+  "main": "express_api_server.js",
+  "scripts": {
+    "start": "node express_api_server.js",
+    "dev": "node --watch express_api_server.js",
+    "demo": "node nodejs_mongodb_integration.js",
+    "check": "node --check express_api_server.js && node --check nodejs_mongodb_integration.js",
+    "seed": "node seed_database.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mongodb": "^6.12.0"
+  }
+}

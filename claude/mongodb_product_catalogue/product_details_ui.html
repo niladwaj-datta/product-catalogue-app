@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MongoDB Product Catalogue - Product Details</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header Section */
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header h1::before {
+            content: "🛍️";
+            font-size: 1.2em;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+
+        /* Controls Section */
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.2);
+        }
+
+        .filter-select, .sort-select {
+            padding: 12px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .filter-select:hover, .sort-select:hover {
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+            border: 2px solid #ddd;
+        }
+
+        .btn-secondary:hover {
+            background: #e8e8e8;
+            border-color: #999;
+        }
+
+        /* Stats Section */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            color: #999;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Table Section */
+        .table-wrapper {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .table-header {
+            background: #667eea;
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-header h2 {
+            font-size: 1.5em;
+            flex: 1;
+        }
+
+        .table-header .pagination-info {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.9em;
+        }
+
+        /* Scrollable Table */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f5f5f5;
+            border-bottom: 2px solid #667eea;
+        }
+
+        th {
+            padding: 15px 20px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            white-space: nowrap;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.3s ease;
+        }
+
+        th:hover {
+            background: #efefef;
+        }
+
+        td {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            color: #555;
+        }
+
+        tbody tr {
+            transition: background 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background: #f9f9f9;
+        }
+
+        /* Product ID Badge */
+        .product-id {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        /* Product Name Link */
+        .product-name {
+            font-weight: 600;
+            color: #667eea;
+            cursor: pointer;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .product-name:hover {
+            color: #5568d3;
+            text-decoration: underline;
+        }
+
+        /* Category Badge */
+        .category-badge {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+
+        .subcategory-text {
+            display: block;
+            color: #999;
+            font-size: 0.85em;
+            margin-top: 4px;
+        }
+
+        /* Price Styling */
+        .price-cell {
+            text-align: right;
+            font-weight: 600;
+        }
+
+        .mrp {
+            color: #999;
+            text-decoration: line-through;
+            font-size: 0.9em;
+        }
+
+        .selling-price {
+            color: #667eea;
+            font-size: 1.1em;
+            display: block;
+            margin: 5px 0;
+        }
+
+        .discount-badge {
+            display: inline-block;
+            background: #ff6b6b;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        /* Rating Stars */
+        .rating {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stars {
+            color: #ffc107;
+            font-size: 1.1em;
+        }
+
+        .rating-text {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .review-count {
+            display: block;
+            color: #999;
+            font-size: 0.85em;
+        }
+
+        /* Stock Status */
+        .stock-good {
+            color: #4caf50;
+            font-weight: 600;
+        }
+
+        .stock-warning {
+            color: #ff9800;
+            font-weight: 600;
+        }
+
+        .stock-critical {
+            color: #f44336;
+            font-weight: 600;
+        }
+
+        .stock-unit {
+            display: block;
+            color: #999;
+            font-size: 0.85em;
+            margin-top: 4px;
+        }
+
+        /* Manufacturer */
+        .manufacturer-badge {
+            display: inline-block;
+            background: #f3e5f5;
+            color: #7b1fa2;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+        }
+
+        /* Warranty */
+        .warranty-text {
+            color: #4caf50;
+            font-weight: 500;
+        }
+
+        /* Status Badge */
+        .status-active {
+            display: inline-block;
+            background: #c8e6c9;
+            color: #2e7d32;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .status-inactive {
+            display: inline-block;
+            background: #ffccbc;
+            color: #d84315;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        /* Loading & Error States */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+
+        .loading::after {
+            content: " ⏳";
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 49%, 100% { opacity: 1; }
+            50%, 99% { opacity: 0.5; }
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #f44336;
+            margin-bottom: 20px;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-size: 1.1em;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .pagination button {
+            padding: 8px 16px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            background: #667eea;
+            color: white;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination button.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .pagination span {
+            color: #999;
+            font-size: 0.9em;
+        }
+
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .close-btn {
+            color: #999;
+            float: right;
+            font-size: 1.5em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .modal h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            clear: both;
+        }
+
+        .modal-section {
+            margin-bottom: 20px;
+        }
+
+        .modal-section h3 {
+            color: #333;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+
+        .modal-specs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .spec-item {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        .spec-label {
+            color: #999;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .spec-value {
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* Export Button */
+        .export-section {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn-export {
+            padding: 10px 20px;
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-export:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            .search-box {
+                min-width: 100%;
+            }
+
+            .table-wrapper {
+                margin: 0 -20px;
+                border-radius: 0;
+            }
+
+            th, td {
+                padding: 10px 12px;
+                font-size: 0.85em;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 20% auto;
+                padding: 20px;
+            }
+
+            .stats {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+
+            .stat-value {
+                font-size: 1.5em;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                background: white;
+            }
+
+            .controls, .pagination, .header p {
+                display: none;
+            }
+
+            .table-wrapper {
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+
+            table {
+                border: 1px solid #ddd;
+            }
+
+            th, td {
+                border: 1px solid #ddd;
+            }
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #333;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            animation: slideInUp 0.3s ease;
+            z-index: 2000;
+        }
+
+        @keyframes slideInUp {
+            from {
+                transform: translateY(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.success {
+            background: #4caf50;
+        }
+
+        .toast.error {
+            background: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Product Catalogue Dashboard</h1>
+            <p>Real-time product data from MongoDB | Interactive product management interface</p>
+
+            <!-- Controls -->
+            <div class="controls">
+                <div class="search-box">
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        placeholder="🔍 Search by product name, manufacturer, or tags..."
+                    >
+                </div>
+                <select id="categoryFilter" class="filter-select">
+                    <option value="">📁 All Categories</option>
+                    <option value="Electronics">Electronics</option>
+                    <option value="Fashion & Footwear">Fashion & Footwear</option>
+                    <option value="Home & Appliances">Home & Appliances</option>
+                    <option value="Health & Beauty">Health & Beauty</option>
+                </select>
+                <select id="sortSelect" class="sort-select">
+                    <option value="rating">⭐ Sort by Rating</option>
+                    <option value="price-asc">💰 Price: Low to High</option>
+                    <option value="price-desc">💰 Price: High to Low</option>
+                    <option value="newest">🆕 Newest First</option>
+                    <option value="discount">🎉 Highest Discount</option>
+                </select>
+                <button class="btn btn-primary" onclick="loadProducts()">🔄 Refresh</button>
+                <button class="btn btn-secondary" onclick="exportToCSV()">📥 Export CSV</button>
+            </div>
+        </div>
+
+        <!-- Stats Section -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">Total Products</div>
+                <div class="stat-value" id="totalProducts">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Average Rating</div>
+                <div class="stat-value" id="avgRating">0.0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Inventory</div>
+                <div class="stat-value" id="totalStock">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Categories</div>
+                <div class="stat-value" id="totalCategories">5</div>
+            </div>
+        </div>
+
+        <!-- Main Table -->
+        <div class="table-wrapper">
+            <div class="table-header">
+                <h2>📊 Product Details</h2>
+                <span class="pagination-info">
+                    Showing <span id="showingCount">0</span> of <span id="totalCount">0</span> products
+                </span>
+            </div>
+
+            <div id="errorContainer"></div>
+
+            <div id="loadingContainer" class="loading" style="display: none;">
+                Loading products from MongoDB...
+            </div>
+
+            <div id="noDataContainer" class="no-data" style="display: none;">
+                No products found. Try adjusting your filters.
+            </div>
+
+            <div class="table-container" id="tableContainer" style="display: none;">
+                <table id="productsTable">
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable('productId')">Product ID ↕️</th>
+                            <th onclick="sortTable('name')">Product Name ↕️</th>
+                            <th onclick="sortTable('category')">Category ↕️</th>
+                            <th onclick="sortTable('price')">Price ↕️</th>
+                            <th onclick="sortTable('rating')">Rating ↕️</th>
+                            <th onclick="sortTable('stock')">Stock ↕️</th>
+                            <th>Manufacturer</th>
+                            <th>Warranty</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productsBody">
+                        <!-- Products will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" id="paginationContainer">
+            <!-- Pagination buttons will be inserted here -->
+        </div>
+    </div>
+
+    <!-- Product Details Modal -->
+    <div id="detailsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle"></h2>
+
+            <div class="modal-section">
+                <h3>📋 Basic Information</h3>
+                <div class="modal-specs">
+                    <div class="spec-item">
+                        <div class="spec-label">Product ID</div>
+                        <div class="spec-value" id="modalProductId"></div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">Manufacturer</div>
+                        <div class="spec-value" id="modalManufacturer"></div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">Category</div>
+                        <div class="spec-value" id="modalCategory"></div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">Sub Category</div>
+                        <div class="spec-value" id="modalSubCategory"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-section">
+                <h3>💰 Pricing</h3>
+                <div class="modal-specs">
+                    <div class="spec-item">
+                        <div class="spec-label">MRP</div>
+                        <div class="spec-value" id="modalMRP"></div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">Selling Price</div>
+                        <div class="spec-value" id="modalSellingPrice"></div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">Discount</div>
+                        <div class="spec-value" id="modalDiscount"></div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">You Save</div>
+                        <div class="spec-value" id="modalSavings"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-section">
+                <h3>📦 Stock & Inventory</h3>
+                <div class="modal-specs">
+                    <div class="spec-item">
+                        <div class="spec-label">Available Stock</div>
+                        <div class="spec-value" id="modalStock"></div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">Reorder Level</div>
+                        <div class="spec-value" id="modalReorderLevel"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-section">
+                <h3>⭐ Customer Reviews</h3>
+                <div class="modal-specs">
+                    <div class="spec-item">
+                        <div class="spec-label">Average Rating</div>
+                        <div class="spec-value" id="modalAvgRating"></div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">Review Count</div>
+                        <div class="spec-value" id="modalReviewCount"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-section">
+                <h3>🔧 Specifications</h3>
+                <div id="modalSpecifications"></div>
+            </div>
+
+            <div class="modal-section">
+                <h3>📝 Description</h3>
+                <div id="modalDescription" style="line-height: 1.6; color: #555;"></div>
+            </div>
+
+            <div class="modal-section">
+                <h3>🛡️ Warranty & Support</h3>
+                <div id="modalWarranty" style="color: #4caf50; font-weight: 500;"></div>
+            </div>
+
+            <div class="export-section">
+                <button class="btn-export" onclick="printProductDetails()">🖨️ Print</button>
+                <button class="btn-export" style="background: #2196F3;" onclick="shareProductDetails()">📤 Share</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== Configuration ==========
+        const API_BASE_URL = 'http://localhost:5000/api';
+        const ITEMS_PER_PAGE = 10;
+        
+        let allProducts = [];
+        let filteredProducts = [];
+        let currentPage = 1;
+        let currentSort = 'rating';
+        let currentFilter = '';
+        let currentSearch = '';
+
+        // ========== Initialize ==========
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProducts();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                currentSearch = e.target.value;
+                currentPage = 1;
+                filterAndDisplay();
+            });
+
+            document.getElementById('categoryFilter').addEventListener('change', (e) => {
+                currentFilter = e.target.value;
+                currentPage = 1;
+                filterAndDisplay();
+            });
+
+            document.getElementById('sortSelect').addEventListener('change', (e) => {
+                currentSort = e.target.value;
+                filterAndDisplay();
+            });
+
+            // Close modal on outside click
+            window.addEventListener('click', function(event) {
+                const modal = document.getElementById('detailsModal');
+                if (event.target === modal) {
+                    closeModal();
+                }
+            });
+        }
+
+        // ========== Load Products from API/DB ==========
+        async function loadProducts() {
+            showLoading(true);
+            clearError();
+
+            try {
+                // Check if API is available
+                const response = await fetch(`${API_BASE_URL}/products?limit=100`);
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch from API');
+                }
+
+                const data = await response.json();
+                
+                if (data.success && data.data && Array.isArray(data.data)) {
+                    allProducts = data.data;
+                    updateStats();
+                    filterAndDisplay();
+                    showLoading(false);
+                } else {
+                    throw new Error('Invalid data format from API');
+                }
+            } catch (error) {
+                console.log('API unavailable, loading sample data...');
+                loadSampleData();
+                showLoading(false);
+            }
+        }
+
+        // ========== Sample Data (Fallback) ==========
+        function loadSampleData() {
+            allProducts = [
+                {
+                    productId: 1001,
+                    name: "MacBook Pro 16\" M3 Max",
+                    category: { mainCategory: "Electronics", subCategory: "Laptops", tags: ["macOS", "professional"] },
+                    price: { MRP: 249999, sellingPrice: 224999, discount: 10, currency: "INR" },
+                    stock: { quantity: 15, unit: "pieces", reorderLevel: 5 },
+                    rating: { average: 4.8, reviewCount: 342 },
+                    specifications: [
+                        { spec: "Processor", value: "Apple M3 Max 12-core" },
+                        { spec: "RAM", value: "16GB Unified Memory" },
+                        { spec: "Storage", value: "512GB SSD" }
+                    ],
+                    manufacturer: "Apple Inc.",
+                    warranty: "1 Year Limited Warranty",
+                    description: "Premium laptop with Apple M3 Max chip, stunning display for professionals",
+                    images: ["/img/macbook.jpg"],
+                    createdAt: new Date("2024-01-15"),
+                    isActive: true
+                },
+                {
+                    productId: 1002,
+                    name: "Dell XPS 13 Plus",
+                    category: { mainCategory: "Electronics", subCategory: "Laptops", tags: ["Windows", "portable"] },
+                    price: { MRP: 149999, sellingPrice: 129999, discount: 13, currency: "INR" },
+                    stock: { quantity: 28, unit: "pieces", reorderLevel: 8 },
+                    rating: { average: 4.6, reviewCount: 256 },
+                    specifications: [
+                        { spec: "Processor", value: "Intel Core i7-1360P" },
+                        { spec: "RAM", value: "16GB LPDDR5" },
+                        { spec: "Storage", value: "512GB SSD" }
+                    ],
+                    manufacturer: "Dell Technologies",
+                    warranty: "1 Year Premium Support",
+                    description: "Ultra-portable laptop with OLED display and aluminum chassis",
+                    images: ["/img/dell-xps.jpg"],
+                    createdAt: new Date("2024-02-20"),
+                    isActive: true
+                },
+                {
+                    productId: 1003,
+                    name: "Sony WH-1000XM5 Headphones",
+                    category: { mainCategory: "Electronics", subCategory: "Audio", tags: ["wireless", "noise-cancelling"] },
+                    price: { MRP: 34999, sellingPrice: 27999, discount: 20, currency: "INR" },
+                    stock: { quantity: 52, unit: "pieces", reorderLevel: 10 },
+                    rating: { average: 4.7, reviewCount: 1205 },
+                    specifications: [
+                        { spec: "Noise Cancellation", value: "Industry-leading ANC" },
+                        { spec: "Battery", value: "30 hours playback" },
+                        { spec: "Connectivity", value: "Bluetooth 5.3" }
+                    ],
+                    manufacturer: "Sony Corporation",
+                    warranty: "1 Year Manufacturer Warranty",
+                    description: "Industry-leading noise-cancelling wireless headphones with premium sound",
+                    images: ["/img/sony-headphones.jpg"],
+                    createdAt: new Date("2024-03-10"),
+                    isActive: true
+                },
+                {
+                    productId: 1004,
+                    name: "Samsung 65\" 4K QLED TV",
+                    category: { mainCategory: "Electronics", subCategory: "Televisions", tags: ["4K", "QLED"] },
+                    price: { MRP: 149999, sellingPrice: 99999, discount: 33, currency: "INR" },
+                    stock: { quantity: 8, unit: "pieces", reorderLevel: 3 },
+                    rating: { average: 4.5, reviewCount: 487 },
+                    specifications: [
+                        { spec: "Screen Size", value: "65 inches" },
+                        { spec: "Resolution", value: "4K (3840 x 2160)" },
+                        { spec: "Panel", value: "QLED Quantum Dot" }
+                    ],
+                    manufacturer: "Samsung Electronics",
+                    warranty: "2 Years Full Warranty",
+                    description: "Crystal UHD 4K QLED Smart TV with quantum dot technology",
+                    images: ["/img/samsung-tv.jpg"],
+                    createdAt: new Date("2024-01-25"),
+                    isActive: true
+                },
+                {
+                    productId: 1005,
+                    name: "Apple iPhone 15 Pro Max 256GB",
+                    category: { mainCategory: "Electronics", subCategory: "Smartphones", tags: ["iOS", "5G"] },
+                    price: { MRP: 159999, sellingPrice: 149999, discount: 6, currency: "INR" },
+                    stock: { quantity: 35, unit: "pieces", reorderLevel: 15 },
+                    rating: { average: 4.9, reviewCount: 2341 },
+                    specifications: [
+                        { spec: "Processor", value: "Apple A17 Pro" },
+                        { spec: "Storage", value: "256GB" },
+                        { spec: "Display", value: "6.7-inch Super Retina XDR" }
+                    ],
+                    manufacturer: "Apple Inc.",
+                    warranty: "1 Year Limited Warranty",
+                    description: "Latest flagship smartphone with A17 Pro chip and advanced camera",
+                    images: ["/img/iphone-15.jpg"],
+                    createdAt: new Date("2023-09-22"),
+                    isActive: true
+                },
+                {
+                    productId: 1006,
+                    name: "Canon EOS R6 Mark II",
+                    category: { mainCategory: "Electronics", subCategory: "Cameras", tags: ["mirrorless", "professional"] },
+                    price: { MRP: 419999, sellingPrice: 379999, discount: 10, currency: "INR" },
+                    stock: { quantity: 6, unit: "pieces", reorderLevel: 2 },
+                    rating: { average: 4.8, reviewCount: 156 },
+                    specifications: [
+                        { spec: "Sensor", value: "20.1MP Full-Frame CMOS" },
+                        { spec: "Video", value: "6K 60fps, 4K 120fps" },
+                        { spec: "Autofocus", value: "1053 AF points" }
+                    ],
+                    manufacturer: "Canon Inc.",
+                    warranty: "1 Year International Warranty",
+                    description: "Professional mirrorless camera with 6K video and 1053 AF points",
+                    images: ["/img/canon-camera.jpg"],
+                    createdAt: new Date("2024-05-15"),
+                    isActive: true
+                },
+                {
+                    productId: 1009,
+                    name: "Nike Air Jordan 1 Retro High",
+                    category: { mainCategory: "Fashion & Footwear", subCategory: "Shoes", tags: ["basketball", "sneakers"] },
+                    price: { MRP: 19999, sellingPrice: 15999, discount: 20, currency: "INR" },
+                    stock: { quantity: 142, unit: "pairs", reorderLevel: 30 },
+                    rating: { average: 4.8, reviewCount: 5234 },
+                    specifications: [
+                        { spec: "Shoe Type", value: "Basketball Sneaker" },
+                        { spec: "Material", value: "Leather, Synthetic" },
+                        { spec: "Sizes", value: "5-14 (US)" }
+                    ],
+                    manufacturer: "Nike Inc.",
+                    warranty: "Manufacturing defects only - 30 days",
+                    description: "Iconic basketball sneaker with premium leather and classic design",
+                    images: ["/img/jordan-1.jpg"],
+                    createdAt: new Date("2024-07-05"),
+                    isActive: true
+                },
+                {
+                    productId: 1010,
+                    name: "Levi's Classic Blue Jeans 501",
+                    category: { mainCategory: "Fashion & Footwear", subCategory: "Clothing", tags: ["denim", "classic"] },
+                    price: { MRP: 8999, sellingPrice: 6999, discount: 22, currency: "INR" },
+                    stock: { quantity: 287, unit: "pieces", reorderLevel: 50 },
+                    rating: { average: 4.5, reviewCount: 2156 },
+                    specifications: [
+                        { spec: "Material", value: "100% Cotton Denim" },
+                        { spec: "Fit", value: "Straight Leg" },
+                        { spec: "Wash", value: "Stone Wash Blue" }
+                    ],
+                    manufacturer: "Levi Strauss & Co.",
+                    warranty: "Manufacturing defects only - 60 days",
+                    description: "Timeless denim jeans with classic straight-leg cut",
+                    images: ["/img/levis-jeans.jpg"],
+                    createdAt: new Date("2024-03-15"),
+                    isActive: true
+                }
+            ];
+
+            updateStats();
+            filterAndDisplay();
+        }
+
+        // ========== Filter & Display Products ==========
+        function filterAndDisplay() {
+            filteredProducts = allProducts.filter(product => {
+                const matchesSearch = currentSearch === '' || 
+                    product.name.toLowerCase().includes(currentSearch.toLowerCase()) ||
+                    product.manufacturer.toLowerCase().includes(currentSearch.toLowerCase()) ||
+                    (product.category.tags && product.category.tags.some(tag => 
+                        tag.toLowerCase().includes(currentSearch.toLowerCase())
+                    ));
+
+                const matchesFilter = currentFilter === '' || 
+                    product.category.mainCategory === currentFilter;
+
+                return matchesSearch && matchesFilter && product.isActive;
+            });
+
+            // Sort
+            sortProducts();
+
+            // Paginate and display
+            currentPage = 1;
+            displayProducts();
+            updatePagination();
+        }
+
+        function sortProducts() {
+            filteredProducts.sort((a, b) => {
+                switch(currentSort) {
+                    case 'rating':
+                        return b.rating.average - a.rating.average;
+                    case 'price-asc':
+                        return a.price.sellingPrice - b.price.sellingPrice;
+                    case 'price-desc':
+                        return b.price.sellingPrice - a.price.sellingPrice;
+                    case 'newest':
+                        return new Date(b.createdAt) - new Date(a.createdAt);
+                    case 'discount':
+                        return b.price.discount - a.price.discount;
+                    default:
+                        return 0;
+                }
+            });
+        }
+
+        function displayProducts() {
+            const tableContainer = document.getElementById('tableContainer');
+            const noDataContainer = document.getElementById('noDataContainer');
+            const tbody = document.getElementById('productsBody');
+
+            if (filteredProducts.length === 0) {
+                tableContainer.style.display = 'none';
+                noDataContainer.style.display = 'block';
+                return;
+            }
+
+            tableContainer.style.display = 'block';
+            noDataContainer.style.display = 'none';
+
+            const start = (currentPage - 1) * ITEMS_PER_PAGE;
+            const end = start + ITEMS_PER_PAGE;
+            const pageProducts = filteredProducts.slice(start, end);
+
+            tbody.innerHTML = '';
+
+            pageProducts.forEach(product => {
+                const row = document.createElement('tr');
+                const statusClass = product.stock.quantity > 0 ? 'stock-good' : 'stock-critical';
+                const statusText = product.stock.quantity > product.stock.reorderLevel ? '✓ In Stock' : '⚠ Low Stock';
+
+                row.innerHTML = `
+                    <td><span class="product-id">#${product.productId}</span></td>
+                    <td><a class="product-name" onclick="showProductDetails(${product.productId})">${product.name}</a></td>
+                    <td>
+                        <span class="category-badge">${product.category.mainCategory}</span>
+                        <span class="subcategory-text">${product.category.subCategory}</span>
+                    </td>
+                    <td class="price-cell">
+                        <span class="mrp">₹${product.price.MRP.toLocaleString('en-IN')}</span>
+                        <span class="selling-price">₹${product.price.sellingPrice.toLocaleString('en-IN')}</span>
+                        <span class="discount-badge">${product.price.discount}% OFF</span>
+                    </td>
+                    <td>
+                        <div class="rating">
+                            <span class="stars">${getStarRating(product.rating.average)}</span>
+                            <div>
+                                <span class="rating-text">${product.rating.average}</span>
+                                <span class="review-count">${product.rating.reviewCount} reviews</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="${statusClass}">${product.stock.quantity}</span>
+                        <span class="stock-unit">${product.stock.unit}</span>
+                    </td>
+                    <td><span class="manufacturer-badge">${product.manufacturer}</span></td>
+                    <td><span class="warranty-text">${product.warranty}</span></td>
+                    <td><span class="status-active">Active</span></td>
+                    <td>
+                        <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.85em;" 
+                            onclick="showProductDetails(${product.productId})">View</button>
+                    </td>
+                `;
+
+                tbody.appendChild(row);
+            });
+
+            // Update showing count
+            document.getElementById('showingCount').textContent = pageProducts.length;
+            document.getElementById('totalCount').textContent = filteredProducts.length;
+        }
+
+        function getStarRating(rating) {
+            const fullStars = Math.floor(rating);
+            const hasHalfStar = rating % 1 >= 0.5;
+            let stars = '★'.repeat(fullStars);
+            if (hasHalfStar) stars += '½';
+            stars += '☆'.repeat(5 - Math.ceil(rating));
+            return stars;
+        }
+
+        // ========== Pagination ==========
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+            const paginationContainer = document.getElementById('paginationContainer');
+
+            paginationContainer.innerHTML = '';
+
+            if (totalPages <= 1) return;
+
+            // Previous button
+            const prevBtn = document.createElement('button');
+            prevBtn.textContent = '← Previous';
+            prevBtn.disabled = currentPage === 1;
+            prevBtn.onclick = () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    displayProducts();
+                    updatePagination();
+                    window.scrollTo(0, 0);
+                }
+            };
+            paginationContainer.appendChild(prevBtn);
+
+            // Page numbers
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+
+            if (startPage > 1) {
+                const firstBtn = document.createElement('button');
+                firstBtn.textContent = '1';
+                firstBtn.onclick = () => {
+                    currentPage = 1;
+                    displayProducts();
+                    updatePagination();
+                    window.scrollTo(0, 0);
+                };
+                paginationContainer.appendChild(firstBtn);
+
+                if (startPage > 2) {
+                    const dots = document.createElement('span');
+                    dots.textContent = '...';
+                    paginationContainer.appendChild(dots);
+                }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const btn = document.createElement('button');
+                btn.textContent = i;
+                btn.className = i === currentPage ? 'active' : '';
+                btn.onclick = () => {
+                    currentPage = i;
+                    displayProducts();
+                    updatePagination();
+                    window.scrollTo(0, 0);
+                };
+                paginationContainer.appendChild(btn);
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    const dots = document.createElement('span');
+                    dots.textContent = '...';
+                    paginationContainer.appendChild(dots);
+                }
+
+                const lastBtn = document.createElement('button');
+                lastBtn.textContent = totalPages;
+                lastBtn.onclick = () => {
+                    currentPage = totalPages;
+                    displayProducts();
+                    updatePagination();
+                    window.scrollTo(0, 0);
+                };
+                paginationContainer.appendChild(lastBtn);
+            }
+
+            // Next button
+            const nextBtn = document.createElement('button');
+            nextBtn.textContent = 'Next →';
+            nextBtn.disabled = currentPage === totalPages;
+            nextBtn.onclick = () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    displayProducts();
+                    updatePagination();
+                    window.scrollTo(0, 0);
+                }
+            };
+            paginationContainer.appendChild(nextBtn);
+
+            // Page info
+            const info = document.createElement('span');
+            info.textContent = `Page ${currentPage} of ${totalPages}`;
+            info.style.marginLeft = '15px';
+            paginationContainer.appendChild(info);
+        }
+
+        // ========== Update Stats ==========
+        function updateStats() {
+            const activeProducts = allProducts.filter(p => p.isActive);
+            const totalStock = activeProducts.reduce((sum, p) => sum + p.stock.quantity, 0);
+            const avgRating = (activeProducts.reduce((sum, p) => sum + p.rating.average, 0) / activeProducts.length).toFixed(1);
+            const categories = new Set(activeProducts.map(p => p.category.mainCategory)).size;
+
+            document.getElementById('totalProducts').textContent = activeProducts.length;
+            document.getElementById('totalStock').textContent = totalStock.toLocaleString('en-IN');
+            document.getElementById('avgRating').textContent = avgRating;
+            document.getElementById('totalCategories').textContent = categories;
+        }
+
+        // ========== Show Product Details Modal ==========
+        function showProductDetails(productId) {
+            const product = allProducts.find(p => p.productId === productId);
+            if (!product) return;
+
+            document.getElementById('modalTitle').textContent = product.name;
+            document.getElementById('modalProductId').textContent = `#${product.productId}`;
+            document.getElementById('modalManufacturer').textContent = product.manufacturer;
+            document.getElementById('modalCategory').textContent = product.category.mainCategory;
+            document.getElementById('modalSubCategory').textContent = product.category.subCategory;
+            document.getElementById('modalMRP').textContent = `₹${product.price.MRP.toLocaleString('en-IN')}`;
+            document.getElementById('modalSellingPrice').textContent = `₹${product.price.sellingPrice.toLocaleString('en-IN')}`;
+            document.getElementById('modalDiscount').textContent = `${product.price.discount}%`;
+
+            const savings = product.price.MRP - product.price.sellingPrice;
+            document.getElementById('modalSavings').textContent = `₹${savings.toLocaleString('en-IN')}`;
+
+            document.getElementById('modalStock').textContent = `${product.stock.quantity} ${product.stock.unit}`;
+            document.getElementById('modalReorderLevel').textContent = product.stock.reorderLevel;
+            document.getElementById('modalAvgRating').textContent = `${product.rating.average} / 5.0 ${getStarRating(product.rating.average)}`;
+            document.getElementById('modalReviewCount').textContent = product.rating.reviewCount;
+            document.getElementById('modalDescription').textContent = product.description;
+            document.getElementById('modalWarranty').textContent = product.warranty;
+
+            // Specifications
+            const specsHtml = product.specifications.map(spec => `
+                <div class="spec-item">
+                    <div class="spec-label">${spec.spec}</div>
+                    <div class="spec-value">${spec.value}</div>
+                </div>
+            `).join('');
+            document.getElementById('modalSpecifications').innerHTML = `<div class="modal-specs">${specsHtml}</div>`;
+
+            document.getElementById('detailsModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('detailsModal').style.display = 'none';
+        }
+
+        function printProductDetails() {
+            window.print();
+        }
+
+        function shareProductDetails() {
+            const text = document.getElementById('modalTitle').textContent;
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Product from Catalogue',
+                    text: text,
+                    url: window.location.href
+                });
+            } else {
+                showToast('Share functionality not available on this device', 'error');
+            }
+        }
+
+        // ========== Export to CSV ==========
+        function exportToCSV() {
+            if (filteredProducts.length === 0) {
+                showToast('No products to export', 'error');
+                return;
+            }
+
+            let csv = 'Product ID,Product Name,Category,Sub-Category,MRP,Selling Price,Discount,Stock,Rating,Reviews,Manufacturer,Warranty\n';
+
+            filteredProducts.forEach(product => {
+                csv += `${product.productId},"${product.name}","${product.category.mainCategory}","${product.category.subCategory}",${product.price.MRP},${product.price.sellingPrice},${product.price.discount}%,${product.stock.quantity},${product.rating.average},${product.rating.reviewCount},"${product.manufacturer}","${product.warranty}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `products-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+
+            showToast(`Exported ${filteredProducts.length} products to CSV`, 'success');
+        }
+
+        // ========== UI Helpers ==========
+        function showLoading(show) {
+            document.getElementById('loadingContainer').style.display = show ? 'block' : 'none';
+        }
+
+        function clearError() {
+            document.getElementById('errorContainer').innerHTML = '';
+        }
+
+        function showError(message) {
+            const errorContainer = document.getElementById('errorContainer');
+            errorContainer.innerHTML = `<div class="error-message">❌ Error: ${message}</div>`;
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        function sortTable(column) {
+            // This is a placeholder for column sorting
+            showToast(`Sorting by ${column}`, 'success');
+        }
+    </script>
+</body>
+</html>
